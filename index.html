@@ -439,14 +439,17 @@ const SHEET_USERS = 'USUARIOS';
 const COL_CODE    = 0;   // A — Código  → campo de busca
 const COL_CENTRAL = 1;   // B — CENTRAL (Qtd Estoque Central)
 const COL_LOJA    = 2;   // C — SIGILO (Qtd Loja)
-const COL_LOCAL   = 11;  // L — Localização
-const COL_IMG     = 13;  // N — Imagem_link
+const COL_LOCAL   = 12;  // M — Localização
+const SHEET_IMGS  = 'IMAGENS'; // aba de imagens
+const IMG_COL_SKU = 0;   // A — SKU na aba IMAGENS
+const IMG_COL_URL = 2;   // C — Link da imagem na aba IMAGENS
 
 // ═══════════════════════════════════════
 // ESTADO
 // ═══════════════════════════════════════
 let allProducts = [];
 let allUsers    = [];
+let imagesMap   = {}; // SKU → URL da imagem
 let dataLoaded  = false;
 let currentUser = null;
 
@@ -471,17 +474,25 @@ function tableToRows(table) {
 }
 
 async function loadData() {
-  const [stockTable, usersTable] = await Promise.all([
+  const [stockTable, usersTable, imgsTable] = await Promise.all([
     fetchSheet(SHEET_STOCK),
-    fetchSheet(SHEET_USERS)
+    fetchSheet(SHEET_USERS),
+    fetchSheet(SHEET_IMGS)
   ]);
 
   const allStockRows = tableToRows(stockTable);
-  // Pula linha 1 (cabeçalho) e filtra linhas sem código
   allProducts = allStockRows.slice(1).filter(row => row[COL_CODE] && row[COL_CODE].trim() !== '');
 
   const allUserRows = tableToRows(usersTable);
   allUsers = allUserRows.slice(1).filter(row => row[0] && row[0].trim() !== '');
+
+  // Monta dicionário SKU → URL
+  const allImgRows = tableToRows(imgsTable);
+  allImgRows.slice(1).forEach(row => {
+    const sku = (row[IMG_COL_SKU] || '').trim().toUpperCase();
+    const url = (row[IMG_COL_URL] || '').trim();
+    if (sku && url) imagesMap[sku] = url;
+  });
 
   dataLoaded = true;
 }
@@ -586,7 +597,7 @@ function runSearch(q) {
     const central = row[COL_CENTRAL] || '0';
     const loja    = row[COL_LOJA]    || '0';
     const local   = row[COL_LOCAL]   || '—';
-    const imgUrl  = row[COL_IMG]     || '';
+    const imgUrl  = imagesMap[code.toUpperCase()] || '';
 
     const centralClass = parseFloat(central) > 0 ? 'has-stock' : 'zero';
     const lojaClass    = parseFloat(loja)    > 0 ? 'has-stock' : 'zero';
