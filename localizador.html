@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Localizador de Produtos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #ff4747;
+    --success: #47ff9a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ══ LOGIN ══ */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 48px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .login-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  .login-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+  }
+
+  .login-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .login-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  .field-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 20px;
+    border-radius: 2px;
+  }
+
+  .field-input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 4px;
+    border-radius: 2px;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .login-error {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: rgba(255,71,71,0.1);
+    border: 1px solid rgba(255,71,71,0.3);
+    color: var(--danger);
+    font-size: 13px;
+    display: none;
+    border-radius: 2px;
+  }
+
+  /* ══ APP ══ */
+  #app { display: none; min-height: 100vh; position: relative; z-index: 1; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    background: rgba(15,15,15,0.9);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .header-user { display: flex; align-items: center; gap: 12px; }
+  .user-badge { font-size: 12px; color: var(--muted); }
+  .user-name { color: var(--text); font-weight: 500; }
+
+  .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 42px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .page-title span { color: var(--accent); }
+  .page-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 40px; }
+
+  /* ══ SEARCH ══ */
+  .search-wrapper { position: relative; margin-bottom: 40px; }
+
+  .search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none;
+  }
+
+  #search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 18px 18px 18px 52px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  #search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,71,0.08);
+  }
+
+  #search-input::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* ══ CARDS ══ */
+  #results-area { min-height: 200px; }
+
+  .result-count {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .result-count span { color: var(--accent); font-weight: 600; }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 72px 1fr 120px 120px 1fr;
+    gap: 20px;
+    align-items: center;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: fadeIn 0.25s ease both;
+  }
+
+  .product-card:hover {
+    border-color: rgba(232,255,71,0.3);
+    transform: translateX(3px);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .product-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .product-img-placeholder {
+    width: 64px;
+    height: 64px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--muted);
+  }
+
+  .product-code {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
+
+  .card-field-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .card-field-value {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .card-field-value.zero { color: var(--muted); }
+  .card-field-value.has-stock { color: var(--success); }
+
+  .location-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent2);
+    word-break: break-word;
+    line-height: 1.5;
+  }
+
+  /* ══ ESTADOS ══ */
+  .state-box {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--muted);
+  }
+
+  .state-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+
+  .state-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .state-desc { font-size: 14px; }
+
+  /* ══ RESPONSIVE ══ */
+  @media (max-width: 640px) {
+    .product-card {
+      grid-template-columns: 56px 1fr;
+    }
+    .product-code { grid-column: 2; }
+    .card-stock-central,
+    .card-stock-loja,
+    .card-location { grid-column: 1 / -1; }
+    header { padding: 0 16px; }
+    main { padding: 32px 16px; }
+    .page-title { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">▣ LOCALIZADOR</div>
+    <h1 class="login-title">Bem-vindo<br>de volta.</h1>
+    <p class="login-subtitle">Faça login para acessar o localizador.</p>
+
+    <label class="field-label" for="login-user">Usuário</label>
+    <input class="field-input" type="text" id="login-user" placeholder="seu usuário" autocomplete="username">
+
+    <label class="field-label" for="login-pass">Senha</label>
+    <input class="field-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-brand">▣ Localizador</div>
+    <div class="header-user">
+      <span class="user-badge">Logado como <span class="user-name" id="logged-name"></span></span>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <h1 class="page-title">Localizar<br><span>Produto</span></h1>
+    <p class="page-subtitle">Busque pelo código do produto para ver o estoque e localização.</p>
+
+    <div class="search-wrapper">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Digite o código do produto..." oninput="onSearch(this.value)">
+    </div>
+
+    <div id="results-area">
+      <div class="state-box">
+        <span class="state-icon">📦</span>
+        <div class="state-title">Pronto para buscar</div>
+        <div class="state-desc">Digite o código acima para localizar um produto.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIGURAÇÃO — edite só aqui se precisar
+// ═══════════════════════════════════════
+const SHEET_ID    = '19okKN-tJ-C2qC8KyVVNiYfjQIwGSLYlaXqeILL0hwzs';
+const SHEET_STOCK = 'ESTOQUE';
+const SHEET_USERS = 'USUARIOS';
+
+// Índices das colunas (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12, N=13)
+const COL_CODE    = 5;   // F — Código_Central  → campo de busca
+const COL_CENTRAL = 6;   // G — Qtd_Central
+const COL_LOJA    = 9;   // J — Qtd_Sigilo
+const COL_LOCAL   = 11;  // L — Localização
+const COL_IMG     = 13;  // N — Imagem_link
+
+// ═══════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════
+let allProducts = [];
+let allUsers    = [];
+let dataLoaded  = false;
+let currentUser = null;
+
+// ═══════════════════════════════════════
+// BUSCAR PLANILHA
+// ═══════════════════════════════════════
+async function fetchSheet(sheetName) {
+  const url  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res  = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  return json.table;
+}
+
+function tableToRows(table) {
+  if (!table || !table.rows) return [];
+  return table.rows.map(row =>
+    (row.c || []).map(cell =>
+      (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v).trim() : ''
+    )
+  );
+}
+
+async function loadData() {
+  const [stockTable, usersTable] = await Promise.all([
+    fetchSheet(SHEET_STOCK),
+    fetchSheet(SHEET_USERS)
+  ]);
+
+  const allStockRows = tableToRows(stockTable);
+  // Pula linha 1 (cabeçalho) e filtra linhas sem código
+  allProducts = allStockRows.slice(1).filter(row => row[COL_CODE] && row[COL_CODE].trim() !== '');
+
+  const allUserRows = tableToRows(usersTable);
+  allUsers = allUserRows.slice(1).filter(row => row[0] && row[0].trim() !== '');
+
+  dataLoaded = true;
+}
+
+// ═══════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════
+async function doLogin() {
+  const user  = document.getElementById('login-user').value.trim();
+  const pass  = document.getElementById('login-pass').value.trim();
+  const btn   = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+
+  if (!user || !pass) { showError('Preencha usuário e senha.'); return; }
+
+  btn.disabled    = true;
+  btn.textContent = 'Verificando...';
+  errEl.style.display = 'none';
+
+  try {
+    if (!dataLoaded) await loadData();
+
+    const found = allUsers.find(row =>
+      row[0] && row[1] &&
+      row[0].toLowerCase() === user.toLowerCase() &&
+      row[1] === pass
+    );
+
+    if (found) {
+      currentUser = found[0];
+      document.getElementById('logged-name').textContent = currentUser;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display         = 'block';
+      document.getElementById('search-input').focus();
+    } else {
+      showError('Usuário ou senha incorretos.');
+    }
+  } catch (e) {
+    showError('Erro ao carregar dados. Verifique se a planilha está pública.');
+    console.error(e);
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Entrar';
+}
+
+function showError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent      = msg;
+  el.style.display    = 'block';
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display          = 'none';
+  document.getElementById('login-user').value           = '';
+  document.getElementById('login-pass').value           = '';
+  document.getElementById('search-input').value         = '';
+  resetResults();
+}
+
+function resetResults() {
+  document.getElementById('results-area').innerHTML = `
+    <div class="state-box">
+      <span class="state-icon">📦</span>
+      <div class="state-title">Pronto para buscar</div>
+      <div class="state-desc">Digite o código acima para localizar um produto.</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+// BUSCA
+// ═══════════════════════════════════════
+let searchTimer = null;
+
+function onSearch(value) {
+  clearTimeout(searchTimer);
+  const q = value.trim().toUpperCase();
+  if (!q) { resetResults(); return; }
+  searchTimer = setTimeout(() => runSearch(q), 250);
+}
+
+function runSearch(q) {
+  const area    = document.getElementById('results-area');
+  const results = allProducts.filter(row =>
+    row[COL_CODE] && row[COL_CODE].toUpperCase().includes(q)
+  );
+
+  if (results.length === 0) {
+    area.innerHTML = `
+      <div class="state-box">
+        <span class="state-icon">🔍</span>
+        <div class="state-title">Nenhum produto encontrado</div>
+        <div class="state-desc">Nenhum item com código contendo "<strong>${q}</strong>".</div>
+      </div>`;
+    return;
+  }
+
+  const cards = results.map((row, i) => {
+    const code    = row[COL_CODE]    || '—';
+    const central = row[COL_CENTRAL] || '0';
+    const loja    = row[COL_LOJA]    || '0';
+    const local   = row[COL_LOCAL]   || '—';
+    const imgUrl  = row[COL_IMG]     || '';
+
+    const centralClass = parseFloat(central) > 0 ? 'has-stock' : 'zero';
+    const lojaClass    = parseFloat(loja)    > 0 ? 'has-stock' : 'zero';
+
+    const imgHtml = imgUrl
+      ? `<img class="product-img" src="${imgUrl}" alt="${code}" onerror="this.outerHTML='<div class=\\'product-img-placeholder\\'>📦</div>'">`
+      : `<div class="product-img-placeholder">📦</div>`;
+
+    return `
+      <div class="product-card" style="animation-delay:${i * 0.05}s">
+        ${imgHtml}
+        <div class="product-code">${code}</div>
+        <div class="card-stock-central">
+          <div class="card-field-label">Estoque Central</div>
+          <div class="card-field-value ${centralClass}">${central}</div>
+        </div>
+        <div class="card-stock-loja">
+          <div class="card-field-label">Loja Sigio</div>
+          <div class="card-field-value ${lojaClass}">${loja}</div>
+        </div>
+        <div class="card-location">
+          <div class="card-field-label">Localização</div>
+          <div class="location-value">${local}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="result-count">
+      <span>${results.length}</span> produto${results.length > 1 ? 's' : ''} encontrado${results.length > 1 ? 's' : ''}
+    </div>
+    ${cards}`;
+}
+
+// ═══════════════════════════════════════
+// ENTER no login
+// ═══════════════════════════════════════
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-user').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-pass').focus();
+});
+</script>
+</body>
+</html>
